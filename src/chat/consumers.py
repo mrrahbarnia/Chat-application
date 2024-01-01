@@ -5,7 +5,7 @@ from rest_framework.renderers import JSONRenderer
 from django.contrib.auth import get_user_model
 from asgiref.sync import async_to_sync
 
-from .models import Message
+from .models import Message, ChatRoom
 from .serializers import MessageSerializer
 
 user = get_user_model()
@@ -14,24 +14,31 @@ user = get_user_model()
 class ChatConsumer(WebsocketConsumer):
 
     def new_message(self, dict_data):
+        room_name = dict_data['chat_room']
+        chat_model = ChatRoom.objects.get(name=room_name)
         author = dict_data['username']
         message = dict_data['message']
         user_instance = user.objects.get(username=author)
-        message_model = Message.objects.create(author=user_instance, content=message)
+        message_model = Message.objects.create(
+            author=user_instance, content=message
+            , chat_room=chat_model
+        )
+
 
         result = eval(self.message_serializer(message_model))
         self.send_message(result)
 
 
-
     def fetch_message(self, data):
-        qs = Message.last_messages()
+        room_name = data['chat_room']
+        qs = Message.last_messages(self, room_name=room_name)
         message = self.message_serializer(qs)
         content = {
             'command': 'fetch_message',
             'message': eval(message)
             }
         self.chat_message(content)
+        pass
 
 
     def message_serializer(self, qs):

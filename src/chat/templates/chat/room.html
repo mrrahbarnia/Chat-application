@@ -92,7 +92,7 @@
 
 
     {{ room_name|json_script:"room-name" }}
-    <script src="{% static 'scripts/reconnecting_websocket.js' %}"></script>
+    <script src="{% static 'reconnecting-websocket.js' %}"></script>
     <script>
 
       var username = {{ username }}
@@ -107,7 +107,7 @@
         );
 
       chatSocket.onopen = function(e) {
-          chatSocket.send(JSON.stringify({'command': 'fetch_message'}));
+          chatSocket.send(JSON.stringify({'command': 'fetch_message', 'chat_room': roomName}));
       }
 
 
@@ -148,6 +148,7 @@
               'message': message,
               'command': 'new_message',
               'username' : username,
+              'chat_room': roomName
           }));
           messageInputDom.value = '';
       };
